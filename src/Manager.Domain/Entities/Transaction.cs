@@ -7,6 +7,17 @@ namespace Manager.Domain.Entities
 {
     public class Transaction : Base
     {
+        public Transaction()
+        {
+
+        }
+        public Transaction(decimal amount, DateTime transactionDate, long senderId, long receiverId)
+        {
+            Amount = amount;
+            TransactionDate = transactionDate;
+            SenderId = senderId;
+            ReceiverId = receiverId;
+        }
 
         public decimal Amount { get; set; }
         public DateTime TransactionDate { get; set; } = DateTime.Now;

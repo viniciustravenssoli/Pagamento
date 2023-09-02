@@ -20,14 +20,16 @@ namespace Manager.Services.Services
         private readonly IUserService _userService;
         private readonly IUserRepository _userRepository;
         private readonly HttpClient _httpClient;
+        private readonly INotificationService _notificationService;
 
-        public TransactionService(IMapper mapper, ITransactionRepository transactionRepository, IUserService userService, HttpClient httpClient, IUserRepository userRepository)
+        public TransactionService(IMapper mapper, ITransactionRepository transactionRepository, IUserService userService, HttpClient httpClient, IUserRepository userRepository, INotificationService notificationService)
         {
             _mapper = mapper;
             _transactionRepository = transactionRepository;
             _userService = userService;
             _httpClient = httpClient;
             _userRepository = userRepository;
+            _notificationService = notificationService;
         }
 
         public async Task<TransactionDTO> Create(TransactionDTO transactionDTO)
@@ -63,6 +65,14 @@ namespace Manager.Services.Services
 
             await _userRepository.Update(sender);
             await _userRepository.Update(receiver);
+
+            string corpo = $"Transaçao recebida no valor de ${transactionDTO.Amount}";
+            string assunto = "transaçao";
+
+            // defino aqui o destinatario apenas para o teste com ethreal fake stpm
+            string destinatario = "clemmie.walter38@ethereal.email";
+            // a ideia aqui seria passar o email do receiver
+            await _notificationService.EnviarEmailAsync(/* receiver.Email  --> {destinatario}*/ destinatario, assunto, corpo);
 
             return _mapper.Map<TransactionDTO>(transactionCreated);
         }
