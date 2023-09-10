@@ -7,6 +7,6 @@ namespace Manager.Services.Interface
 {
     public interface INotificationService
     {
-        Task<bool> EnviarEmailAsync(string destinatario, string assunto, string corpo);
+        bool EnviarEmail(string destinatario, string assunto, string corpo);
     }
 }

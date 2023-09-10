@@ -34,48 +34,67 @@ namespace Manager.Services.Services
 
         public async Task<TransactionDTO> Create(TransactionDTO transactionDTO)
         {
-            var isAuth = await this.AuthorizeTransaction();
-
+            var isAuth = await AuthorizeTransaction();
             if (!isAuth)
             {
                 throw new DomainException("Nao Autorizado");
             }
-
+            
             var sender = await _userRepository.Get(transactionDTO.SenderId);
-            
-            var IsValid = await this.ValidateTransaction(sender, transactionDTO.Amount);
-            
-            if(!IsValid)
+            if (sender.UserType == UserType.Merchant)
+            {
+                throw new DomainException("Usuarios do tipo Merchant nao podem realizar transaçoes");
+            }
+
+            var IsValid = await ValidateTransaction(sender, transactionDTO.Amount);
+            if (!IsValid)
             {
                 throw new DomainException("Usuario não possui saldo suficiente");
             }
 
             var receiver = await _userRepository.Get(transactionDTO.ReceiverId);
 
-            if (sender.UserType == UserType.Merchant)
-            {
-                throw new DomainException("Usuarios do tipo Merchant nao podem realizar transaçoes");
-            }
-
             var transaction = _mapper.Map<Transaction>(transactionDTO);
-
-            transaction.CalcularNovoSaldo(sender, receiver, transaction.Amount);
 
             var transactionCreated = await _transactionRepository.Create(transaction);
 
-            await _userRepository.Update(sender);
-            await _userRepository.Update(receiver);
-
-            string corpo = $"Transaçao recebida no valor de ${transactionDTO.Amount}";
-            string assunto = "transaçao";
-
-            // defino aqui o destinatario apenas para o teste com ethreal fake stpm
-            string destinatario = "clemmie.walter38@ethereal.email";
-            // a ideia aqui seria passar o email do receiver
-            await _notificationService.EnviarEmailAsync(/* receiver.Email  --> {destinatario}*/ destinatario, assunto, corpo);
+            await ProcessTransaction(transaction, sender, receiver);
 
             return _mapper.Map<TransactionDTO>(transactionCreated);
         }
+
+        private async Task ProcessTransaction(Transaction transaction, User sender, User receiver)
+        {
+            try
+            {
+                // Realizar lógica de processamento da transação
+                transaction.CalcularNovoSaldo(sender, receiver, transaction.Amount);
+
+                // Atualizar os saldos dos usuários
+                await _userRepository.Update(sender);
+                await _userRepository.Update(receiver);
+
+                // Enviar notificação de transação
+                string destinatario = "kenya.cruickshank42@ethereal.email";
+                string corpo = $"Transação recebida no valor de ${transaction.Amount}";
+                string assunto = "Transação";
+
+                // Aqui, a ideia seria receber o email do reciever, porem como estou utilizando ethereal usei o email teste fornecido para poder realizar o processo.
+                // tbm poderiamos criar um usuario com o email fornecido pelo ethreal e no lugar do {destinatario} passiariamos o {reciver.Email}.
+                // tudo isso so ira funcionar ate o site ethereal desabilitar o email fornecido.
+                _notificationService.EnviarEmail(/* receiver.Email  --> {destinatario}*/destinatario, assunto, corpo);
+            }
+            catch (Exception ex)
+            {
+                // Lidar com exceções, fazer log, ou reverter a transação, se necessário
+                throw new DomainException("Erro ao processar a transação", ex);
+            }
+        }
+
+
+
+
+
 
         public async Task<List<TransactionDTO>> GetTransactionAsReceiver(long userId)
         {
@@ -133,7 +152,7 @@ namespace Manager.Services.Services
         }
 
 
-        
+
 
         // using (HttpClient client = new HttpClient())
         // {

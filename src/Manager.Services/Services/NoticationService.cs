@@ -13,22 +13,22 @@ namespace Manager.Services.Services
 {
     public class NoticationService : INotificationService
     {
-        public async Task<bool> EnviarEmailAsync(string destinatario, string assunto, string corpo)
+        public bool EnviarEmail(string destinatario, string assunto, string corpo)
         {
             try
             {
                 var email = new MimeMessage();
-                email.From.Add(MailboxAddress.Parse("clemmie.walter38@ethereal.email"));
+                email.From.Add(MailboxAddress.Parse("kenya.cruickshank42@ethereal.email"));
                 email.To.Add(MailboxAddress.Parse(destinatario));
                 email.Subject = assunto;
-                email.Body = new TextPart(TextFormat.Html) {Text = corpo};
+                email.Body = new TextPart(TextFormat.Html) { Text = corpo };
 
                 using var smtp = new SmtpClient();
                 smtp.Connect("smtp.ethereal.email", 587, SecureSocketOptions.StartTls);
-                smtp.Authenticate("clemmie.walter38@ethereal.email", "qHU2DHsdWdahWvbUFC");
+                smtp.Authenticate("kenya.cruickshank42@ethereal.email", "4J2Y8v7XaaKZYPJffZ");
                 smtp.Send(email);
                 smtp.Disconnect(true);
-                
+
                 return true;
             }
             catch (Exception)
